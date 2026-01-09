@@ -1,0 +1,56 @@
+#!/bin/bash
+
+### LOGIN
+POST http://127.0.0.1:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "zizo@example.com",
+  "password": "mypassword"
+}
+### SIGN UP
+POST http://127.0.0.1:5000/api/auth/sign-up
+Content-Type: application/json
+
+{
+  "email": "mo@example.com",
+  "username": "mo",
+  "password": "mypassword",
+  "first_name": "Test",
+  "last_name": "User",
+  "age": 25,
+  "sex": "male",
+  "sexualPreference": "everyone",
+
+  "title": "Engineer",
+  "company": "ACME Corp",
+  "industry": "Technology",
+  "experienceLevel": "Mid-level",
+  
+  "education": "Bachelor's Degree",
+  "bio": "I love coding!",
+  "interests": ["Traveling", "Reading / Books"]
+}
+
+
+### GET-INTERSETS
+GET http://127.0.0.1:5000/api/interests?category=Entertainment%20%26%20Media
+
+
+Content-Type: application/json
+
+###GET-INTERESTS-GROUPPED-CATEGORY
+GET http://127.0.0.1:5000/api/interests/categories
+Content-Type: application/json
+
+
+
+### GET CURRENT USER
+GET http://127.0.0.1:5000/api/auth/me
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxOSwiZXhwIjoxNzY3OTcxNjg5fQ.Cmyvc1pfSTz3zT8YkRh161G48QZab7ySdingib2xPFU
+Content-Type: application/json
+
+
+### GET USER BY ID
+GET http://127.0.0.1:5000/api/users/19
+Content-Type: application/json

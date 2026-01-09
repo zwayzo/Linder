@@ -4,6 +4,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from os import path
 
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 migrate = Migrate()
@@ -21,7 +22,7 @@ def create_app():
     # login_manager.login_view = 'auth.login'
 
     # Import models before user_loader
-    from .models import User, Note
+    from .models import User
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -30,9 +31,16 @@ def create_app():
     # Import and register blueprints
     from .views import views
     from .auth import auth
+    from .interest import interest
+    # from .profile import profile
+    from .user import user
+    
+    
     app.register_blueprint(views, url_prefix='/')
-    app.register_blueprint(auth, url_prefix='/')
-
+    app.register_blueprint(auth, url_prefix='/api/auth')
+    app.register_blueprint(interest, url_prefix='/api/')
+    # app.register_blueprint(profile, url_prefix='/api/profile')
+    app.register_blueprint(user, url_prefix='/api/users')
     create_database(app)
 
     return app
