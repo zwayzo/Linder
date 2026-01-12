@@ -1,12 +1,16 @@
 from flask import Blueprint, render_template, request, flash, redirect, jsonify, current_app
 import string
+
+from website import user
 from .models import Profile, User, Interest
 from werkzeug.security import generate_password_hash, check_password_hash
-from . import db
+from . import db, mail
 from flask_login import login_user, logout_user, login_required, current_user as curr
 import jwt
 from datetime import datetime, timedelta
 from functools import wraps
+import secrets
+from flask_mail import Message
 
 auth = Blueprint('auth', __name__)
 
@@ -46,6 +50,67 @@ def token_required(f):
 
         return f(current_user, *args, **kwargs)
     return decorated
+
+
+
+def send_mail(user, token):
+    # token = secrets.token_urlsafe(32)
+    # user.email_token_hash = generate_password_hash(token)
+    # user.email_token_expiry = datetime.utcnow() + timedelta(hours=24)  # link valid 24h
+    # db.session.commit()
+    # print("user token hash:", user.email_token_hash)
+    # print("user token expiry:", user.email_token_expiry)
+    
+    
+    confirm_link = f"http://localhost:5000/auth/confirm-email?token={token}"
+
+    msg = Message(
+        subject="Confirm your email",
+        recipients=[user.email]
+    )
+    msg.body = f"""
+    Hi {user.first_name},
+
+    Thanks for signing up! Click the link below to confirm your email:
+
+{   confirm_link}
+
+    This link expires in 24 hours.
+
+    If you did not sign up, ignore this email.
+"""
+    mail.send(msg)
+    return "✅ Your email has been sent!"
+    
+
+
+
+@auth.route('/confirm-email', methods=['GET'])
+def confirm_email():
+    token = request.args.get('token')
+    print("Received token:", token)
+    if not token:
+        return "Invalid confirmation link", 400
+
+    users = User.query.filter(User.reset_token_expiry > datetime.utcnow()).all()
+    matched_user = None
+    for u in users:
+        if check_password_hash(u.reset_token_hash, token):
+            matched_user = u
+            break
+
+    if not matched_user:
+        return "Invalid or expired token", 400
+
+    # Mark email as verified
+    matched_user.is_email_verified = True
+    matched_user.reset_token_hash = None
+    matched_user.reset_token_expiry = None
+    matched_user.emailVerified = True 
+    db.session.commit()
+
+    return "✅ Your email has been confirmed!"
+
 
 
 
@@ -113,19 +178,16 @@ def sign_up():
         image3 = data.get('image3')
         image4 = data.get('image4')
 
-        if interests_list.lenght < 6:
+        if len(interests_list) < 6:
             return jsonify({"error": "Select at least 6 interests"}), 400
-        # if (len(username) < 4):
-        #     flash("username too short", category='error')
-        # if any(char in string.punctuation for char in password) == False:
-        #     flash("password must contain at least one special character", category='error')
-        # if (len(password) < 8 ):
-        #     flash("password must contain at least 8 character", category="error")
 
+        mail_token = secrets.token_urlsafe(32)
         user = User(email=email, username=username, 
                     password=generate_password_hash(password, method='pbkdf2:sha256'), 
                     first_name=first_name, last_name=last_name, age=age, sex=sex, 
-                    sexualPreference=sexual_preference)
+                    sexualPreference=sexual_preference,
+                    reset_token_hash = generate_password_hash(mail_token),
+                    reset_token_expiry = datetime.utcnow() + timedelta(hours=24))
         db.session.add(user)
         db.session.commit()
         
@@ -153,6 +215,8 @@ def sign_up():
     user.profile.online = True
     # login_user(user, remember=True)
     token = generate_token(user.id)
+    
+    send_mail(user, mail_token)
     
     return jsonify({
         "message": "Account created successfully!",
@@ -208,4 +272,90 @@ def get_current_user(current_user):
         }
     }), 200
     
-    
+
+
+
+@auth.route('/forgot-password', methods=['POST'])
+def request_reset_password():
+    data = request.get_json()
+    email = data.get('email')
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        # Generate token
+        token = secrets.token_urlsafe(32)
+        user.reset_token_hash = generate_password_hash(token)
+        user.reset_token_expiry = datetime.utcnow() + timedelta(minutes=15)
+        db.session.commit()
+
+        # Create clickable reset link pointing to backend
+        reset_link = f"http://localhost:5000/auth/reset-password/confirm?token={token}"
+
+        # Send email
+        msg = Message(
+            subject="Reset Your Password",
+            recipients=[user.email]
+        )
+        msg.body = f"""
+Hello,
+
+You requested a password reset. Click the link below to reset your password:
+
+{reset_link}
+
+This link expires in 15 minutes.
+
+If you did not request this, ignore this email.
+"""
+        
+        
+        try:
+            mail.send(msg)
+            print("✅ Reset email sent successfully!")
+        except Exception as e:
+            print("❌ Error sending email:", e)
+
+    # Always return generic message
+    return jsonify({"token": token,
+        "message": "If this email exists, a reset link has been sent."})
+
+
+
+
+@auth.route('/reset-password/', methods=['POST'])
+def confirm_reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('new_password')
+
+    if not token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 400
+
+    # Find user with valid token
+    users = User.query.filter(User.reset_token_expiry > datetime.utcnow()).all()
+    matched_user = None
+    for u in users:
+        if check_password_hash(u.reset_token_hash, token):
+            matched_user = u
+            break
+
+    if not matched_user:
+        return jsonify({"error": "Invalid or expired token"}), 400
+
+    # Update password
+    matched_user.password = generate_password_hash(new_password)
+
+    # Invalidate token
+    matched_user.reset_token_hash = None
+    matched_user.reset_token_expiry = None
+
+    db.session.commit()
+
+    return jsonify({"message": "Password has been reset successfully"}), 200
+
+
+

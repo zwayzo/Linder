@@ -1,7 +1,6 @@
 from . import db
 from flask_login import UserMixin
-from sqlalchemy.sql import func
-
+from datetime import datetime
 
 profile_interests = db.Table(
     'profile_interests',
@@ -17,7 +16,7 @@ profile_interests = db.Table(
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True)
-    password = db.Column(db.String(150))
+    password = db.Column(db.String(500))
     first_name = db.Column(db.String(150))
     last_name = db.Column(db.String(150))
     username = db.Column(db.String(150), unique=True)
@@ -27,6 +26,8 @@ class User(db.Model, UserMixin):
     sexualPreference = db.Column(db.Enum('male', 'female', 'everyone', name='sexual_preference'), default='everyone')
     profile = db.relationship("Profile", backref="user", uselist=False)
 
+    reset_token_hash = db.Column(db.String(500), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
     def __repr__(self):
         return f"<User {self.username}>"
 
@@ -69,14 +70,23 @@ class Profile(db.Model):
 class Interest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=True, nullable=False)
-    category = db.Column(db.String(50), nullable=False)
+    category = db.Column(db.String(100), nullable=False)
 
     def __repr__(self):
         return f"<Interest {self.name}>"
 
 
-# class Profession(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     title = db.Column(db.String(150))
-#     company = db.Column(db.String(150))
-#     industry = db.Column(db.String(150))
+
+
+class Conversation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # Optional: name of conversation or chat room
+    name = db.Column(db.String(150), nullable=True)
+
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    room = db.Column(db.String(50), index=True)
+    sender_id = db.Column(db.Integer)
+    receiver_id = db.Column(db.Integer)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)

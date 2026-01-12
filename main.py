@@ -1,6 +1,6 @@
 from website import create_app, db
 from website.models import Interest
-
+from website import socketio
 
 app = create_app()
 
@@ -61,5 +61,5 @@ app = create_app()
     
     
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
     

@@ -1,0 +1,11 @@
+flask
+pyjwt
+pytest
+pytest-flask
+Flask-Migrate
+psycopg
+psycopg-binary
+flask-socketio
+Flask-Mail
+websocket-client
+eventlet

@@ -3,6 +3,7 @@ import string
 from .models import Profile, User, Interest
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
+import secrets
 from flask_login import login_user, logout_user, login_required, current_user as curr
 import jwt
 from datetime import datetime, timedelta
@@ -46,3 +47,34 @@ def get_user_profile(user_id):
     }
 
     return jsonify(user_data), 200
+
+
+@user.route('/profile', methods=['POST'])
+@login_required
+def update_profile():
+    data = request.get_json()
+    profile = Profile.query.filter_by(user_id=curr.id).first()
+    if not profile:
+        return jsonify({"error": "Profile not found"}), 404
+    profile_list = ["title", "company", "bio", "education", "experienceLevel", "industry",
+                      "image1", "image2", "image3", "image4"]
+    
+    list = [ "username", "email", "age", "sexualPreference", "first_name", "last_name"]
+    
+    user = User.query.get(curr.id)
+    profile = Profile.query.filter_by(user_id=curr.id).first()
+    
+    for key in list:
+        if key in data:
+            setattr(user, key, data[key])
+            db.session.commit()
+        
+    for key in profile_list:
+        if key in data:
+            setattr(profile, key, data[key])
+            db.session.commit()
+    
+    return jsonify({"message": "Profile updated successfully"}), 200
+
+
+

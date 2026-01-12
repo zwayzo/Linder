@@ -13,8 +13,8 @@ POST http://127.0.0.1:5000/api/auth/sign-up
 Content-Type: application/json
 
 {
-  "email": "mo@example.com",
-  "username": "mo",
+  "email": "elgrandesimo53@gmail.com",
+  "username": "mohammed",
   "password": "mypassword",
   "first_name": "Test",
   "last_name": "User",
@@ -29,7 +29,7 @@ Content-Type: application/json
   
   "education": "Bachelor's Degree",
   "bio": "I love coding!",
-  "interests": ["Traveling", "Reading / Books"]
+  "interests": ["Traveling", "Reading / Books", "Music", "Sports", "Cooking", "Movies"]
 }
 
 
@@ -52,5 +52,41 @@ Content-Type: application/json
 
 
 ### GET USER BY ID
-GET http://127.0.0.1:5000/api/users/19
+GET http://127.0.0.1:5000/api/users/21
+Content-Type: application/json
+
+
+### UPDATE USER PROFILE
+POST http://127.0.0.1:5000/api/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoyMSwiZXhwIjoxNzY4MjE0NTExfQ.VDGeLAohpFqGNjJTqnGVevr6g86FKjuEPlJeyVfz9OA
+Content-Type: application/json
+
+{
+  "bio": "Updated bio information.",
+  "title": "Senior Engineer",
+  "first_name": "UpdatedFirstName",
+  "last_name": "UpdatedLastName"
+}
+
+### REQUEST PASSWORD RESET
+POST http://127.0.0.1:5000/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "elgrandesimo53@gmail.com"
+}
+
+### CONFIRM PASSWORD RESET
+POST http://127.0.0.1:5000/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "NqbYR_rmkR6Slr6vWmdsf2Re4XN-sLXQxnsYSJUF47s",
+  "new_password": "23082002!"
+}
+
+
+
+### CONFIRM EMAIL
+GET http://127.0.0.1:5000/api/auth/confirm-email?token=0yVwglot_yj9wkmgF2dR-uh6Cq1-r1m0W3qhfVMBCZU
 Content-Type: application/json
