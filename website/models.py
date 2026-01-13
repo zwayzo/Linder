@@ -8,10 +8,6 @@ profile_interests = db.Table(
     db.Column('interest_id', db.Integer, db.ForeignKey('interest.id'), primary_key=True)
 )
 
-# user_interest = db.Table('user_interest',
-#     db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-#     db.Column('interest_id', db.Integer, db.ForeignKey('interest.id'), primary_key=True)
-# )
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)

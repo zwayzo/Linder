@@ -1,7 +1,22 @@
 from website import create_app, db
 from website.models import Interest
-from website import socketio
+# from website import socketio
+import time
+import psycopg2
+import os
 
+
+while True:
+    try:
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
+        conn.close()
+        print("✅ Postgres is ready!")
+        break
+    except:
+        print("Waiting for Postgres...")
+        time.sleep(2)
+
+print("Starting app...")
 app = create_app()
 
 # interests = [
@@ -61,5 +76,5 @@ app = create_app()
     
     
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
-    
+    # socketio.run(app, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
